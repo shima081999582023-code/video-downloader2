@@ -1,47 +1,113 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Auto Direct Video Link Downloader</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f3f6fb;padding:30px}
+    .card{max-width:760px;margin:30px auto;padding:22px;background:#fff;border-radius:12px;box-shadow:0 6px 30px rgba(15,30,80,0.06)}
+    input{width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;font-size:15px}
+    button{padding:10px 16px;border-radius:8px;border:0;background:#2a9d8f;color:#fff;font-weight:600;cursor:pointer}
+    .row{display:flex;gap:10px;margin-top:12px}
+    .list{margin-top:18px}
+    .item{padding:12px;border:1px solid #eee;border-radius:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+    .note{color:#666;margin-top:10px;font-size:13px}
+    .small{font-size:13px;color:#444}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Auto-Direct Video Link Downloader</h2>
+    <p class="note">Paste URL halaman yang mengandung video (public). Sistem akan mencoba mengekstrak direct video links.</p>
+
+    <input id="pageUrl" placeholder="https://example.com/post/123" />
+    <div class="row">
+      <button id="goBtn">Cari & Tampilkan Link</button>
+      <button id="clearBtn" style="background:#e76f51">Clear</button>
+    </div>
+
+    <div id="status" class="note"></div>
+
+    <div id="results" class="list"></div>
+
+    <p class="note">Catatan: tidak bekerja untuk situs yang memakai DRM atau memerlukan login. Jika tidak ada hasil, coba halaman lain.</p>
+  </div>
+
 <script>
-async function downloadVideo() {
-  const url = document.getElementById("videoURL").value.trim();
-  const msg = document.getElementById("msg");
+const BACKEND_BASE = 'https://shima081999582023-code.github.io/video-downloader2/
 
-  if (!url) {
-    msg.innerText = "Masukkan URL terlebih dahulu.";
-    msg.style.color = "red";
-    return;
-  }
-
-  msg.innerText = "Mencari video di halaman...";
-  msg.style.color = "orange";
-
+document.getElementById('goBtn').addEventListener('click', async () => {
+  const url = document.getElementById('pageUrl').value.trim()
+  const status = document.getElementById('status')
+  const results = document.getElementById('results')
+  results.innerHTML = ''
+  if (!url) { status.innerText = 'Masukkan URL halaman dulu.'; return }
+  status.innerText = 'Mencari video...'
   try {
-    // Ambil isi halaman
-    const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-    const text = await res.text();
-
-    // Cari tag <video> atau source
-    const match = text.match(/src=["']([^"']+\.(mp4|webm|mkv|mov|ogg|ts|m3u8)[^"']*)["']/i);
-
-    if (!match) {
-      msg.innerText = "Video tidak ditemukan atau situs dilindungi.";
-      msg.style.color = "red";
-      return;
+    const resp = await fetch(`${BACKEND_BASE}/api/extract?url=${encodeURIComponent(url)}`)
+    const j = await resp.json()
+    if (!j.success) {
+      status.innerText = 'Tidak ditemukan: ' + (j.msg || 'no results')
+      return
     }
+    status.innerText = 'Ditemukan ' + j.sources.length + ' link.'
+    j.sources.forEach(s => {
+      const item = document.createElement('div')
+      item.className = 'item'
+      const left = document.createElement('div')
+      left.innerHTML = `<div class="small">${s.split('?')[0]}</div>`
+      const right = document.createElement('div')
+      // Open
+      const openBtn = document.createElement('button')
+      openBtn.innerText = 'Open'
+      openBtn.style.marginRight = '8px'
+      openBtn.onclick = () => window.open(s, '_blank')
+      // Download
+      const dlBtn = document.createElement('button')
+      dlBtn.innerText = 'Download'
+      dlBtn.style.background = '#264653'
+      dlBtn.style.marginRight = '8px'
+      dlBtn.onclick = () => {
+        const a = document.createElement('a')
+        a.href = s
+        // name from url
+        const name = s.split('/').pop().split('?')[0] || 'video'
+        a.download = name
+        a.click()
+      }
+      // Copy
+      const cpBtn = document.createElement('button')
+      cpBtn.innerText = 'Copy'
+      cpBtn.style.background = '#0077cc'
+      cpBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(s)
+          cpBtn.innerText = 'Copied'
+          setTimeout(()=> cpBtn.innerText = 'Copy', 1500)
+        } catch(e) {
+          alert('Gagal copy: ' + e.message)
+        }
+      }
 
-    const videoURL = match[1];
-
-    msg.innerText = "Video ditemukan! Mengunduh...";
-    msg.style.color = "green";
-
-    // Nama file otomatis
-    const fileName = videoURL.split('/').pop().split('?')[0];
-
-    const a = document.createElement("a");
-    a.href = videoURL;
-    a.download = fileName;
-    a.click();
-
+      right.appendChild(openBtn)
+      right.appendChild(dlBtn)
+      right.appendChild(cpBtn)
+      item.appendChild(left)
+      item.appendChild(right)
+      results.appendChild(item)
+    })
   } catch (e) {
-    msg.innerText = "Gagal mengambil video.";
-    msg.style.color = "red";
+    console.error(e)
+    status.innerText = 'Error saat mengambil: ' + e.message
   }
-}
+})
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  document.getElementById('pageUrl').value = ''
+  document.getElementById('results').innerHTML = ''
+  document.getElementById('status').innerText = ''
+})
 </script>
+</body>
+</html>
