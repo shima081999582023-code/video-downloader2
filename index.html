@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Video Downloader</title>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: #222;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      margin-top: 10px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 15px;
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 15px;
+      background: #02b875;
+      color: white;
+      font-size: 17px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #019b63;
+    }
+
+    #msg {
+      margin-top: 15px;
+      color: #333;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h2>Universal Video Downloader</h2>
+    <p>Paste URL video (direct link file)</p>
+
+    <input id="videoURL" type="text" placeholder="https://example.com/video.mp4">
+
+    <button onclick="downloadVideo()">Download Video</button>
+
+    <p id="msg"></p>
+  </div>
+
+<script>
+function downloadVideo() {
+  const url = document.getElementById("videoURL").value.trim();
+  const msg = document.getElementById("msg");
+
+  if (!url) {
+    msg.innerText = "Masukkan URL terlebih dahulu.";
+    msg.style.color = "red";
+    return;
+  }
+
+  // cek apakah file adalah format video umum
+  const valid = url.match(/\.(mp4|webm|mov|mkv)(\?.*)?$/i);
+
+  if (!valid) {
+    msg.innerText = "URL tidak mengarah ke file video langsung.";
+    msg.style.color = "red";
+    return;
+  }
+
+  msg.innerText = "Download dimulai...";
+  msg.style.color = "green";
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "video";
+  a.click();
+}
+</script>
+
+</body>
+</html>
