@@ -1,5 +1,5 @@
 <script>
-function downloadVideo() {
+async function downloadVideo() {
   const url = document.getElementById("videoURL").value.trim();
   const msg = document.getElementById("msg");
 
@@ -9,16 +9,39 @@ function downloadVideo() {
     return;
   }
 
-  // cek apakah URL mengandung nama file
-  const fileNameMatch = url.split('/').pop();
-  const fileName = fileNameMatch ? fileNameMatch : "downloaded_file";
+  msg.innerText = "Mencari video di halaman...";
+  msg.style.color = "orange";
 
-  msg.innerText = "Download dimulai...";
-  msg.style.color = "green";
+  try {
+    // Ambil isi halaman
+    const res = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
+    const text = await res.text();
 
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = fileName;
-  a.click();
+    // Cari tag <video> atau source
+    const match = text.match(/src=["']([^"']+\.(mp4|webm|mkv|mov|ogg|ts|m3u8)[^"']*)["']/i);
+
+    if (!match) {
+      msg.innerText = "Video tidak ditemukan atau situs dilindungi.";
+      msg.style.color = "red";
+      return;
+    }
+
+    const videoURL = match[1];
+
+    msg.innerText = "Video ditemukan! Mengunduh...";
+    msg.style.color = "green";
+
+    // Nama file otomatis
+    const fileName = videoURL.split('/').pop().split('?')[0];
+
+    const a = document.createElement("a");
+    a.href = videoURL;
+    a.download = fileName;
+    a.click();
+
+  } catch (e) {
+    msg.innerText = "Gagal mengambil video.";
+    msg.style.color = "red";
+  }
 }
 </script>
